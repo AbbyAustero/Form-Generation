@@ -1,0 +1,10 @@
+{
+	"templateID": "001",
+    "content": {
+        "amortization": 5666.67,
+        "termsMonths": 24,
+        "addOnRate": 1.5,
+        "effectiveInterestRate": 30.32,
+        "applicationReferenceNumber": 1234567890
+    }
+}

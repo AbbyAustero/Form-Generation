@@ -1,0 +1,46 @@
+{
+	"templateID": "001",
+    "content": {
+        "firstName": "Jayzel",
+        "middleName": "Ambrosia",
+        "lastName": "Marcial",
+        "addressLine1": "Tokyo cor. Sydney St.",
+        "addressLine2": "Summerwind Dasmarinas",
+        "cityMunicipality": "Cavite",
+        "zipCode": "4100",
+        "loanAmount": 1000.00,
+        "effectiveInterestRate": 12.2,
+        "totalOutStandingBalance": 1060.0,
+        "totalInterest": 60.0,
+        "payments": [
+	        {
+	            "repaymentDate": "11/13/2019",
+	            "principal": 250.0,
+	            "interest": 15.0,
+	            "total": 265.0,
+	            "osBalance": 795.0
+	        },
+	        {
+	            "repaymentDate": "12/13/2019",
+	            "principal": 250.0,
+	            "interest": 15.0,
+	            "total": 265.0,
+	            "osBalance": 530.0
+	        },
+	        {
+	            "repaymentDate": "01/13/2020",
+	            "principal": 250.0,
+	            "interest": 15.0,
+	            "total": 265.0,
+	            "osBalance": 265.0
+	        },
+	        {
+	            "repaymentDate": "02/13/2020",
+	            "principal": 250.0,
+	            "interest": 15.0,
+	            "total": 265.0,
+	            "osBalance": 0.00
+	        }
+	    ]
+    }
+}

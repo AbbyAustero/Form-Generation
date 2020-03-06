@@ -23,10 +23,6 @@ public class PdfTemplate extends TemplateVariables {
 
     private String fileName;
 
-    private String zipFolderPath;
-
-    private String formId;
-
     private int maxRetry;
 
     private Boolean generateIndex;

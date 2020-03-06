@@ -12,11 +12,9 @@ import org.springframework.stereotype.Component;
 
 import com.api.pdfcontents.constants.PdfContentsConstants;
 import com.api.pdfcontents.entity.PdfContents;
+import com.api.pdfcontents.enums.StatusCode;
 import com.mongodb.QueryBuilder;
 
-import lombok.Data;
-
-@Data
 @Component
 public class PdfGeneratorReader implements ItemReader<MongoItemReader<PdfContents>> {
 
@@ -28,8 +26,9 @@ public class PdfGeneratorReader implements ItemReader<MongoItemReader<PdfContent
         MongoItemReader<PdfContents> mongoItemReader = new MongoItemReader<>();
         mongoItemReader.setTemplate(template);
         mongoItemReader.setSort(sort());
-        mongoItemReader.setQuery(queryForms());
+        mongoItemReader.setQuery(query());
         mongoItemReader.setTargetType(PdfContents.class);
+        mongoItemReader.setSaveState(false);
 
         return mongoItemReader;
     }
@@ -40,8 +39,8 @@ public class PdfGeneratorReader implements ItemReader<MongoItemReader<PdfContent
         return sort;
     }
 
-    private String queryForms() {
-        QueryBuilder queryBuilder = QueryBuilder.start().put("status").is("INCOMPLETE");
+    private String query() {
+        QueryBuilder queryBuilder = QueryBuilder.start().put("status").is(StatusCode.INCOMPLETE.getStatus());
         return queryBuilder.get().toString();
     }
 

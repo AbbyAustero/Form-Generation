@@ -17,6 +17,4 @@ public class PdfContentsConstants {
     public static final String PDF_CONTENTS_ID = "_id";
 
     public static final String INDEX_FILE_TXT = "IndexFile.txt";
-
-    public static final String PARENT_FOLDER_PATH = "C:\\Users\\AbbyAustero\\Desktop\\Dev\\Squad-6\\Form-Generator\\pdfcontents\\src\\main\\resources\\generatedFile\\";
 }

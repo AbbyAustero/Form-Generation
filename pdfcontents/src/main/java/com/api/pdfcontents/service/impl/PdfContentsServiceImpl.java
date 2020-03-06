@@ -25,7 +25,7 @@ public class PdfContentsServiceImpl extends PdfContentsService {
             throw new BadRequestException(PdfContentsConstants.INVALID_FIELD_CONTENT);
         }
 
-        log.info("Retrieving templateID: {}", content.getTemplateID());
+        log.info("Retrieving PDF Template with templateID: {}", content.getTemplateID());
         PdfTemplate pdfTemplate = templateService.getTemplate(content.getTemplateID());
 
         log.info("Validating variables");

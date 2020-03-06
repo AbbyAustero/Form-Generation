@@ -2,26 +2,22 @@ package com.api.pdfcontents.stepbuilder;
 
 import static com.api.pdfcontents.enums.StatusCode.COMPLETE;
 
-import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.batch.core.StepExecution;
 import org.springframework.batch.core.annotation.AfterStep;
-import org.springframework.batch.core.annotation.BeforeStep;
 import org.springframework.batch.item.ItemWriter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.api.pdfcontents.entity.PdfContents;
 import com.api.pdfcontents.entity.PdfTemplate;
+import com.api.pdfcontents.enums.StatusCode;
 import com.api.pdfcontents.repo.PdfContentsRepository;
 import com.api.pdfcontents.service.FileService;
 import com.api.pdfcontents.service.PdfTemplateService;
@@ -29,7 +25,6 @@ import com.api.pdfcontents.service.PdfTemplateService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@Component
 public class PdfGeneratorWriter implements ItemWriter<PdfContents>{
 
     @Autowired
@@ -45,27 +40,26 @@ public class PdfGeneratorWriter implements ItemWriter<PdfContents>{
 
     private int failedGenerateCount;
 
-    private List<PdfTemplate> pdfTemplate;
-
     private List<Path> generateIndexFile;
 
     private List<Path> generateZipFile;
 
-    private LocalDate creationDate;
-
-    @BeforeStep
-    public void getJobParameters(final StepExecution stepExecution) {
-        creationDate = LocalDate.now();
-    }
+    private LocalDate creationDate = LocalDate.now();
 
     @Override
     public void write(List<? extends PdfContents> items) throws Exception {
         log.info("Counting generated pdfs");
         List<PdfContents> pdfContents = pdfContentsRepository.findByReferenceIDIn(
-                items.stream().map(PdfContents::getReferenceID).collect(Collectors.toList()));
+                items.stream()
+                .map(PdfContents::getReferenceID)
+                .collect(Collectors.toList()));
 
-        pdfTemplate = pdfTemplateRepository.getTemplateIdIn(
-                pdfContents.stream().map(PdfContents::getTemplateID).distinct().collect(Collectors.toList()));
+        List<PdfTemplate> pdfTemplate = pdfTemplateRepository.getTemplateIdIn(
+                pdfContents.stream()
+                .filter(form -> form.getStatus().equals(StatusCode.COMPLETE.getStatus()))
+                .map(PdfContents::getTemplateID)
+                .distinct()
+                .collect(Collectors.toList()));
 
         int successCount = pdfContents.stream()
                 .filter(x -> StringUtils.equalsIgnoreCase(COMPLETE.getStatus(), x.getStatus()))
@@ -88,9 +82,8 @@ public class PdfGeneratorWriter implements ItemWriter<PdfContents>{
 
     @AfterStep
     private void getNumberOfGeneratedPdfIndexZipFiles(final StepExecution stepExecution) throws IOException {
-//        cleanFilesInSubFolders(PdfContentsConstants.PARENT_FOLDER_PATH);
         fileService.generateIndexFile(generateIndexFile);
-        fileService.compressFile(generateZipFile, pdfTemplate, creationDate.toString());
+        fileService.compressFile(generateZipFile, creationDate.toString());
 
         log.info("Total Forms processed: {}, Generated: {}, Not Generated: {}",
                 stepExecution.getReadCount(), generatedCount, failedGenerateCount);
@@ -101,11 +94,13 @@ public class PdfGeneratorWriter implements ItemWriter<PdfContents>{
 
         generatedCount = 0;
         failedGenerateCount = 0;
+        generateIndexFile.clear();
+        generateZipFile.clear();
     }
 
     private void incrementCounters(int successCount, int failCount) {
-        generatedCount = successCount;
-        failedGenerateCount = failCount;
+        generatedCount += successCount;
+        failedGenerateCount += failCount;
     }
 
     private void incrementGenerateIndex(List<Path> filePath) {
@@ -114,24 +109,5 @@ public class PdfGeneratorWriter implements ItemWriter<PdfContents>{
 
     private void incrementGenerateZip(List<Path> filePath) {
         generateZipFile = filePath;
-    }
-
-    @SuppressWarnings("unused")
-    private void cleanFilesInSubFolders(String parentFolderPath) throws IOException {
-      try(Stream<Path> pathStream = Files.walk(Paths.get(parentFolderPath))) {
-          List<Path> subFolders = pathStream
-                  .filter(path -> path.toFile().isDirectory())
-                  .map(x -> Paths.get(x.toString()))
-                  .collect(Collectors.toList());
-
-          subFolders.stream().forEach(path -> {
-              for(File file: path.toFile().listFiles()) {
-                  if (!file.isDirectory()) {
-                      file.delete();
-                  }
-              }
-          });
-
-          }
     }
 }

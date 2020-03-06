@@ -4,9 +4,9 @@ import java.util.Map;
 
 import org.springframework.data.mongodb.core.mapping.Field;
 
-import lombok.Data;
+import lombok.Getter;
 
-@Data
+@Getter
 public class TemplateVariables implements ContentReceiver {
 
     @Field("variables")

@@ -33,7 +33,6 @@ public class VariableValidation implements VariableValidator {
         checkEmptyObjectContents(content, requiredFields);
     }
 
-
     private void matchContentsWithRequiredFields(Contents content, Map<String, Specification> requiredFields) {
         String requiredFieldStr = requiredFields.keySet().stream().collect(Collectors.joining(COMMA_SEPARATOR));
 

@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.ITemplateEngine;
 import org.thymeleaf.context.Context;
-import org.thymeleaf.util.StringUtils;
 
 import com.api.pdfcontents.entity.PdfContents;
 import com.api.pdfcontents.service.TemplateContentBuilder;
@@ -20,7 +19,7 @@ public class TemplateContentBuilderImpl implements TemplateContentBuilder {
     @Override
     public String buildHtml(PdfContents contents, String pdfTemplate) {
         Context context = this.generateContext(contents.getContent());
-        return engine.process(StringUtils.unescapeJava(pdfTemplate), context);
+        return engine.process(pdfTemplate, context);
     }
 
     public Context generateContext (Map<String, Object> content) {

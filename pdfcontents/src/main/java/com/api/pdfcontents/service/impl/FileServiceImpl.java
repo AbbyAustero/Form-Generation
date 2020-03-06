@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -21,9 +22,9 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.ObjectUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.CollectionUtils;
 
 import com.api.pdfcontents.entity.PdfContents;
 import com.api.pdfcontents.entity.PdfTemplate;
@@ -49,7 +50,7 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public void execute(PdfContents pdfContents) throws Exception {
-        log.info("Getting pdf template from repository with type: {}", pdfContents.getTemplateID());
+        log.info("Getting pdf template from repository with templateID: {}", pdfContents.getTemplateID());
         PdfTemplate pdfTemplate = pdfTemplateService.getTemplate(pdfContents.getTemplateID());
 
         log.info("Building html from template");
@@ -68,26 +69,28 @@ public class FileServiceImpl implements FileService {
 
     @Override
     public void create(String composedPdf, String pdfFilePath, String pdfFileName) throws Exception {
-        OutputStream os = new FileOutputStream(pdfFilePath + pdfFileName);
-        PdfRendererBuilder builder = new PdfRendererBuilder();
-        builder.useFastMode();
-        builder.withHtmlContent(composedPdf, null);
-        builder.toStream(os);
-        builder.run();
+        try (OutputStream os = new FileOutputStream(pdfFilePath + pdfFileName)) {
+            PdfRendererBuilder builder = new PdfRendererBuilder();
+            builder.useFastMode();
+            builder.withHtmlContent(composedPdf, null);
+            builder.toStream(os);
+            builder.run();
+        }
     }
 
     @Override
     public void generateIndexFile(List<Path> folderPath) {
-        folderPath.parallelStream().forEach(path -> {
+        folderPath.stream().forEach(path -> {
             try(Stream<Path> files = Files.list(path)) {
 
                 List<String> fileNames = files
                         .filter(x -> x.getFileName().toString().endsWith(".pdf"))
-                        .map(x -> x.getFileName().toString()).collect(Collectors.toList());
+                        .map(x -> x.getFileName().toString())
+                        .collect(Collectors.toList());
 
                 List<PdfContents> pdfContentTransactions = pdfContentsRepository.findByFileNameIn(fileNames);
 
-                if(!CollectionUtils.isEmpty(pdfContentTransactions)) {
+                if(!ObjectUtils.isEmpty(pdfContentTransactions)) {
                     StringJoiner indexBuilder = new StringJoiner("\n");
                     final AtomicInteger lineCounter = new AtomicInteger();
 
@@ -112,47 +115,46 @@ public class FileServiceImpl implements FileService {
         });
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void writeStringToFile(String content, String filePath) throws IOException {
-        FileUtils.writeStringToFile(new File(filePath), content);
+        FileUtils.writeStringToFile(new File(filePath), content, StandardCharsets.UTF_8);
     }
 
     @Override
-    public void compressFile(List<Path> folderPath, List<PdfTemplate> pdfTemplates, String creationDate) {
+    public void compressFile(List<Path> folderPath, String creationDate) {
         folderPath.stream().forEach(filePath -> {
             String zipFileName = filePath.toString() + "_" + creationDate + ".zip";
             try {
-                compress(filePath.toString(), zipFileName, creationDate);
+                compress(filePath.toString(), zipFileName);
             } catch (IOException e) {
                 log.error("Error occurred while compressing files: ", e);
             }
         });
     }
 
-    public void compress(String folderPath, String zipFolderPath, String creationDate) throws IOException {
-        Path zipPath = null;
+    public void compress(String folderPath, String zipFolderPath) throws IOException {
+        Path zipFilePath = null;
 
         try {
-            zipPath = Files.createFile(Paths.get(zipFolderPath));
+            zipFilePath = Files.createFile(Paths.get(zipFolderPath));
         } catch(FileAlreadyExistsException e) {
             if(Paths.get(zipFolderPath).toFile().delete()) {
-                zipPath = Files.createFile(Paths.get(zipFolderPath));
+                zipFilePath = Files.createFile(Paths.get(zipFolderPath));
             }
         }
 
-        try(ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipPath))) {
-            Path pp = Paths.get(folderPath);
+        try(ZipOutputStream zos = new ZipOutputStream(Files.newOutputStream(zipFilePath))) {
+            Path filesFolderPath = Paths.get(folderPath);
 
-            try (Stream<Path> pathStream = Files.walk(pp)) {
-                pathStream
-                    .filter(path -> !Files.isDirectory(path))
-                    .forEach(path -> {
-                        ZipEntry ze = new ZipEntry(pp.relativize(path).toString());
+            try (Stream<Path> files = Files.walk(filesFolderPath)) {
+                files
+                    .filter(file -> !Files.isDirectory(file))
+                    .forEach(file -> {
+                        ZipEntry ze = new ZipEntry(file.getFileName().toString());
 
                         try {
                             zos.putNextEntry(ze);
-                            Files.copy(path, zos);
+                            Files.copy(file, zos);
                             zos.closeEntry();
                         } catch (IOException e) {
                             log.error("Error occurred while zipping file", e);

@@ -6,6 +6,7 @@ import org.springframework.batch.core.configuration.annotation.EnableBatchProces
 import org.springframework.batch.core.configuration.annotation.JobBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepBuilderFactory;
 import org.springframework.batch.core.configuration.annotation.StepScope;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.item.data.MongoItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -28,17 +29,12 @@ public class BatchJobConfig {
     private JobBuilderFactory jobBuilderFactory;
 
     @Autowired
-    private PdfGeneratorProcessor pdfGeneratorProcessor;
-
-    @Autowired
     private PdfGeneratorReader pdfGeneratorReader;
-
-    @Autowired
-    private PdfGeneratorWriter pdfGeneratorWriter;
 
     @Bean
     public Job pdfGeneratorJob() throws Exception {
         return jobBuilderFactory.get(PdfContentsConstants.PDF_GENERATOR_JOB)
+                .incrementer(new RunIdIncrementer())
                 .flow(pdfGeneratorStep())
                 .end()
                 .build();
@@ -47,7 +43,7 @@ public class BatchJobConfig {
     @Bean
     public Step pdfGeneratorStep() throws Exception {
         return stepBuilderFactory.get(PdfContentsConstants.PDF_GENERATOR_STEP)
-                .<PdfContents, PdfContents>chunk(10)
+                .<PdfContents, PdfContents>chunk(5)
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())
@@ -63,12 +59,12 @@ public class BatchJobConfig {
     @Bean
     @StepScope
     public PdfGeneratorProcessor processor() {
-        return pdfGeneratorProcessor;
+        return new PdfGeneratorProcessor();
     }
 
     @Bean
     @StepScope
     public PdfGeneratorWriter writer() {
-        return pdfGeneratorWriter;
+        return new PdfGeneratorWriter();
     }
 }

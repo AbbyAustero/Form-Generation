@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.List;
 
 import com.api.pdfcontents.entity.PdfContents;
-import com.api.pdfcontents.entity.PdfTemplate;
 
 public interface FileService {
 
@@ -17,5 +16,5 @@ public interface FileService {
 
     public void writeStringToFile(String content, String filePath) throws IOException;
 
-    public void compressFile(List<Path> folderPath, List<PdfTemplate> pdfTemplates, String creationDate);
+    public void compressFile(List<Path> folderPath, String creationDate);
 }

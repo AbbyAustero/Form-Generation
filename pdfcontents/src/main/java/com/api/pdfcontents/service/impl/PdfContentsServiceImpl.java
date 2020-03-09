@@ -1,5 +1,11 @@
 package com.api.pdfcontents.service.impl;
 
+import org.springframework.batch.core.JobParameters;
+import org.springframework.batch.core.JobParametersBuilder;
+import org.springframework.batch.core.JobParametersInvalidException;
+import org.springframework.batch.core.repository.JobExecutionAlreadyRunningException;
+import org.springframework.batch.core.repository.JobInstanceAlreadyCompleteException;
+import org.springframework.batch.core.repository.JobRestartException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 @Service
 public class PdfContentsServiceImpl extends PdfContentsService {
 
+    @Override
     public ResponseEntity<PdfContentsResponse> save(PdfContentRequest content) throws Exception {
         log.info("Checking if content is null or empty curly brackets");
         if (ObjectUtils.isEmpty(content.getContent())) {
@@ -42,5 +49,24 @@ public class PdfContentsServiceImpl extends PdfContentsService {
                 .referenceID(pdfContents.getReferenceID())
                 .build(),
                 HttpStatus.OK);
+    }
+
+    @Override
+    public ResponseEntity<Void> batchJob() {
+        try {
+            JobParameters jobParameters = new JobParametersBuilder()
+                    .addString(PdfContentsConstants.TRIGGER_JOB, String.valueOf(System.currentTimeMillis()))
+                    .toJobParameters();
+
+            jobLauncher.run(job, jobParameters);
+        } catch (JobExecutionAlreadyRunningException
+                | JobRestartException
+                | JobInstanceAlreadyCompleteException
+                | JobParametersInvalidException e) {
+            log.error("Job Run error: ", e);
+            return new ResponseEntity<>(HttpStatus.SERVICE_UNAVAILABLE);
+        }
+
+        return new ResponseEntity<>(HttpStatus.OK);
     }
 }

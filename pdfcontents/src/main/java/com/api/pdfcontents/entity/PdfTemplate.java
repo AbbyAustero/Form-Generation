@@ -23,9 +23,17 @@ public class PdfTemplate extends TemplateVariables {
 
     private String fileName;
 
+    private String zipFilePath;
+
+    private String index;
+
     private int maxRetry;
 
     private Boolean generateIndex;
 
     private Boolean generateZip;
+
+    private String pdfEncryption;
+
+    private Boolean encrypt;
 }

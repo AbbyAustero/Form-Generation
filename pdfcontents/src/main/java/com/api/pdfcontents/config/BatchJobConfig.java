@@ -11,6 +11,8 @@ import org.springframework.batch.item.data.MongoItemReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 
 import com.api.pdfcontents.constants.PdfContentsConstants;
 import com.api.pdfcontents.entity.PdfContents;
@@ -43,10 +45,11 @@ public class BatchJobConfig {
     @Bean
     public Step pdfGeneratorStep() throws Exception {
         return stepBuilderFactory.get(PdfContentsConstants.PDF_GENERATOR_STEP)
-                .<PdfContents, PdfContents>chunk(5)
+                .<PdfContents, PdfContents>chunk(10)
                 .reader(reader())
                 .processor(processor())
                 .writer(writer())
+                .taskExecutor(taskExecutor())
                 .build();
     }
 
@@ -66,5 +69,17 @@ public class BatchJobConfig {
     @StepScope
     public PdfGeneratorWriter writer() {
         return new PdfGeneratorWriter();
+    }
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(10);
+        executor.setMaxPoolSize(20);
+        executor.setQueueCapacity(15);
+        executor.setThreadNamePrefix("AsynchTaskExecutor-");
+        executor.initialize();
+
+        return executor;
     }
 }

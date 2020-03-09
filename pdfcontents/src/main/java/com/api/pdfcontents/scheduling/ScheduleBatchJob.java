@@ -26,7 +26,7 @@ public class ScheduleBatchJob {
     @Autowired
     private Job job;
 
-    @Scheduled(cron = "0 */1 * * * ?")
+    @Scheduled(cron = "0 */3 * * * ?")
     public void performScheduledJob() throws JobExecutionAlreadyRunningException, JobRestartException, JobInstanceAlreadyCompleteException, JobParametersInvalidException, NoSuchJobException {
         JobParameters jobParameters = new JobParametersBuilder()
                 .addString(PdfContentsConstants.SCHEDULE_JOB, String.valueOf(System.currentTimeMillis()))

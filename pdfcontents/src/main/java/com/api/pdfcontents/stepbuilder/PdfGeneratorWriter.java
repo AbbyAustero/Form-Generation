@@ -2,7 +2,6 @@ package com.api.pdfcontents.stepbuilder;
 
 import static com.api.pdfcontents.enums.StatusCode.COMPLETE;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
@@ -40,6 +39,8 @@ public class PdfGeneratorWriter implements ItemWriter<PdfContents>{
 
     private int failedGenerateCount;
 
+    List<PdfTemplate> pdfTemplate;
+
     private List<Path> generateIndexFile;
 
     private List<Path> generateZipFile;
@@ -54,7 +55,7 @@ public class PdfGeneratorWriter implements ItemWriter<PdfContents>{
                 .map(PdfContents::getReferenceID)
                 .collect(Collectors.toList()));
 
-        List<PdfTemplate> pdfTemplate = pdfTemplateRepository.getTemplateIdIn(
+        pdfTemplate = pdfTemplateRepository.getTemplateIdIn(
                 pdfContents.stream()
                 .filter(form -> form.getStatus().equals(StatusCode.COMPLETE.getStatus()))
                 .map(PdfContents::getTemplateID)
@@ -81,21 +82,25 @@ public class PdfGeneratorWriter implements ItemWriter<PdfContents>{
     }
 
     @AfterStep
-    private void getNumberOfGeneratedPdfIndexZipFiles(final StepExecution stepExecution) throws IOException {
-        fileService.generateIndexFile(generateIndexFile);
-        fileService.compressFile(generateZipFile, creationDate.toString());
+    private void getNumberOfGeneratedPdfIndexZipFiles(final StepExecution stepExecution) throws Exception {
+        if (stepExecution.getReadCount() != 0) {
+            log.info("Generating index and zip files");
+            fileService.generateIndexFile(pdfTemplate);
+            fileService.compressFile(pdfTemplate, creationDate.toString());
+
+            log.info("Total index files generated: {}", generateIndexFile.size());
+
+            log.info("Total zip files generated: {}", generateZipFile.size());
+
+            generateIndexFile.clear();
+            generateZipFile.clear();
+        }
 
         log.info("Total Forms processed: {}, Generated: {}, Not Generated: {}",
                 stepExecution.getReadCount(), generatedCount, failedGenerateCount);
 
-        log.info("Total index files generated: {}", generateIndexFile.size());
-
-        log.info("Total zip files generated: {}", generateZipFile.size());
-
         generatedCount = 0;
         failedGenerateCount = 0;
-        generateIndexFile.clear();
-        generateZipFile.clear();
     }
 
     private void incrementCounters(int successCount, int failCount) {

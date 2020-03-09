@@ -13,8 +13,11 @@ public class PdfContentsConstants {
     public static final String PDF_GENERATOR_STEP = "pdfGeneratorStep";
 
     public static final String SCHEDULE_JOB = "ScheduledJob";
+    public static final String TRIGGER_JOB = "TriggerJob";
 
     public static final String PDF_CONTENTS_ID = "_id";
 
     public static final String INDEX_FILE_TXT = "IndexFile.txt";
+
+    public static final String FILE_NAME = "fileName";
 }
